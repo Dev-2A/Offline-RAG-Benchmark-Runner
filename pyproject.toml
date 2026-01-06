@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "offline-rag-benchmark-runner"
+version = "0.1.0"
+description = "Offline RAG Benchmark Runner (Windows copy-paste runnable MVP)"
+requires-python = ">=3.10"
+dependencies = [
+    "PyYAML",
+    "requests",
+    "openpyxl",
+    "typer",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"

@@ -1,0 +1,64 @@
+project:
+  name: "Offline RAG Benchmark Runner"
+
+run:
+  output_root: "results"
+  k_list: [1, 3, 5, 10]
+  topn: 10
+  fail_fast: false
+
+data:
+  queries_path: "data/queries.sample.jsonl"
+  truth_key: "answer_ids"
+
+models:
+  A:
+    query_embedding:
+      provider: "local_hash"
+      dim: 32
+      salt: "A"
+  B:
+    query_embedding:
+      provider: "http_or_local"
+      dim: 32
+      salt: "B"
+      base_url: ""
+      endpoint_path: "/embed"
+      timeout_sec: 15
+
+indices:
+  - name: "lochugflarge_index_normalqa"
+    backend: "mock"
+    vector_field: "question_vt"
+    docs_path: "data/mock_indices/lochugflarge_index_normalqa/docs.jsonl"
+    id_field: "doc_id"
+    label_field: "answer_id"
+    doc_text_field: "question"
+    doc_vector:
+      provider: "local_hash"
+      dim: 32
+      salt: "A"
+
+  - name: "lochugflarge_index_skylifeqa"
+    backend: "mock"
+    vector_field: "question_vt"
+    docs_path: "data/mock_indices/lochugflarge_index_skylifeqa/docs.jsonl"
+    id_field: "doc_id"
+    label_field: "answer_id"
+    doc_text_field: "question"
+    doc_vector:
+      provider: "local_hash"
+      dim: 32
+      salt: "A"
+
+  - name: "lochugflarge2_index_tossqa"
+    backend: "mock"
+    vector_field: "question_vt"
+    docs_path: "data/mock_indices/lochugflarge2_index_tossqa/docs.jsonl"
+    id_field: "doc_id"
+    label_field: "answer_id"
+    doc_text_field: "question"
+    doc_vector:
+      provider: "local_hash"
+      dim: 32
+      salt: "A"

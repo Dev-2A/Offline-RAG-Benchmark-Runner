@@ -1,0 +1,8 @@
+{"query_id":"q1","question":"비밀번호를 잊었을 때 어떻게 재설정하나요?","answer_ids":["a_reset_pw"]}
+{"query_id":"q2","question":"환불은 며칠 안에 가능한가요?","answer_ids":["a_refund_policy"]}
+{"query_id":"q3","question":"로그인이 계속 실패하는데 해결 방법이 있나요?","answer_ids":["a_login_fail"]}
+{"query_id":"q4","question":"배송은 얼마나 걸리나요?","answer_ids":["a_shipping_time"]}
+{"query_id":"q5","question":"멤버십 해지는 어디서 하나요?","answer_ids":["a_cancel_membership"]}
+{"query_id":"q6","question":"결제 수단을 변경할 수 있나요?","answer_ids":["a_change_payment"]}
+{"query_id":"q7","question":"포인트 적립 기준이 궁금해요","answer_ids":["a_point_rule"]}
+{"query_id":"q8","question":"계정 탈퇴하면 데이터는 어떻게 되나요?","answer_ids":["a_delete_account_data"]}
