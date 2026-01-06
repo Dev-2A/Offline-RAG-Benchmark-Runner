@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import os
 from datetime import datetime
-from typing import Dict, List, Tuple
 
 from .config import BenchCfg, IndexCfg, load_config
 from .embedder import Embedder
@@ -18,9 +17,9 @@ def _now_run_id() -> str:
     return datetime.now().strftime("%Y%m%d_%H%M")
 
 
-def _read_queries(path: str) -> List[Dict[str, object]]:
-    out: List[Dict[str, object]] = []
-    with open(path, "r", encoding="utf-8") as f:
+def _read_queries(path: str) -> list[dict[str, object]]:
+    out: list[dict[str, object]] = []
+    with open(path, encoding="utf-8") as f:
         for line in f:
             if line.strip():
                 out.append(json.loads(line))
@@ -36,14 +35,14 @@ def _make_backend(idx: IndexCfg):
     raise ValueError(f"[{idx.name}] Unknown backend: {idx.backend}")
 
 
-def _truth_set(q: Dict[str, object], truth_key: str) -> set[str]:
+def _truth_set(q: dict[str, object], truth_key: str) -> set[str]:
     v = q.get(truth_key, [])
     if isinstance(v, list):
         return {str(x) for x in v}
     return {str(v)}
 
 
-def _ranked_labels(hits: List[SearchHit]) -> List[str]:
+def _ranked_labels(hits: list[SearchHit]) -> list[str]:
     return [h.label for h in hits]
 
 
@@ -54,7 +53,9 @@ def _as_float(x: object, default: float = 0.0) -> float:
         return default
 
 
-def _top_deltas(delta_rows: List[Dict[str, object]], key: str, n: int = 3) -> Tuple[List[Dict[str, object]], List[Dict[str, object]]]:
+def _top_deltas(
+    delta_rows: list[dict[str, object]], key: str, n: int = 3
+) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
     valid = [r for r in delta_rows if key in r and str(r.get(key, "")).strip() != ""]
     valid.sort(key=lambda r: _as_float(r.get(key, 0.0)), reverse=True)
     best = valid[:n]
@@ -78,9 +79,9 @@ def run_benchmark(config_path: str) -> None:
     queries = _read_queries(cfg.data.queries_path)
     logger.info(f"Loaded queries: {len(queries)} from {cfg.data.queries_path}")
 
-    summary_rows: List[Dict[str, object]] = []
-    per_index_sheets: Dict[str, List[Dict[str, object]]] = {}
-    failures: List[str] = []
+    summary_rows: list[dict[str, object]] = []
+    per_index_sheets: dict[str, list[dict[str, object]]] = {}
+    failures: list[str] = []
 
     # ---- main loop: indices x models ----
     for idx in cfg.indices:
@@ -98,8 +99,8 @@ def run_benchmark(config_path: str) -> None:
 
         for model_name, model_cfg in cfg.models.items():
             logger.info(f"-- Model {model_name} --")
-            evals: List[QueryEval] = []
-            details_rows: List[Dict[str, object]] = []
+            evals: list[QueryEval] = []
+            details_rows: list[dict[str, object]] = []
 
             try:
                 embedder = Embedder(model_cfg.query_embedding)
@@ -115,7 +116,7 @@ def run_benchmark(config_path: str) -> None:
 
                     evals.append(QueryEval(query_id=qid, truth=truth, ranked_labels=ranked))
 
-                    row: Dict[str, object] = {
+                    row: dict[str, object] = {
                         "query_id": qid,
                         "question": question,
                         "truth": ",".join(sorted(truth)),
@@ -131,7 +132,7 @@ def run_benchmark(config_path: str) -> None:
                     details_rows.append(row)
 
                 rec = recall_table(evals, cfg.run.k_list)
-                summary: Dict[str, object] = {
+                summary: dict[str, object] = {
                     "index": idx.name,
                     "model": model_name,
                     "queries": len(evals),
@@ -155,12 +156,14 @@ def run_benchmark(config_path: str) -> None:
                 failures.append(msg)
                 if cfg.run.fail_fast:
                     raise
-                summary_rows.append({"index": idx.name, "model": model_name, "queries": 0, "error": str(e)})
+                summary_rows.append(
+                    {"index": idx.name, "model": model_name, "queries": 0, "error": str(e)}
+                )
                 continue
 
     # ---- Build A vs B delta summary per index (if both exist) ----
-    delta_rows: List[Dict[str, object]] = []
-    by_index: Dict[str, Dict[str, Dict[str, object]]] = {}
+    delta_rows: list[dict[str, object]] = []
+    by_index: dict[str, dict[str, dict[str, object]]] = {}
     for r in summary_rows:
         idx_name = str(r.get("index", ""))
         model = str(r.get("model", ""))
@@ -168,7 +171,7 @@ def run_benchmark(config_path: str) -> None:
 
     for idx_name, m in by_index.items():
         if "A" in m and "B" in m and ("error" not in m["A"]) and ("error" not in m["B"]):
-            row: Dict[str, object] = {"index": idx_name}
+            row: dict[str, object] = {"index": idx_name}
 
             for k in cfg.run.k_list:
                 a = _as_float(m["A"].get(f"recall@{k}", 0.0))
@@ -203,7 +206,7 @@ def run_benchmark(config_path: str) -> None:
 
     best, worst = _top_deltas(delta_rows, key="delta@1 (A-B)", n=3)
 
-    def _bullets(rows: List[Dict[str, object]], title: str) -> str:
+    def _bullets(rows: list[dict[str, object]], title: str) -> str:
         if not rows:
             return f"- {title}: _None_\n"
         s = f"- {title}:\n"
@@ -227,7 +230,7 @@ def run_benchmark(config_path: str) -> None:
 
     # ---- Write report.md using template ----
     template_path = os.path.join("templates", "report_template.md")
-    with open(template_path, "r", encoding="utf-8") as f:
+    with open(template_path, encoding="utf-8") as f:
         tpl = f.read()
 
     summary_md = render_summary_table_md(summary_rows)

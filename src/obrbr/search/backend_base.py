@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Protocol
+from typing import Protocol
 
 
 @dataclass
@@ -12,5 +12,4 @@ class SearchHit:
 
 
 class SearchBackend(Protocol):
-    def search(self, query_vector: List[float], topn: int) -> List[SearchHit]:
-        ...
+    def search(self, query_vector: list[float], topn: int) -> list[SearchHit]: ...

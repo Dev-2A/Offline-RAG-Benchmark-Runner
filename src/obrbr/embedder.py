@@ -3,30 +3,29 @@ from __future__ import annotations
 import hashlib
 import math
 from dataclasses import dataclass
-from typing import List, Optional
 
 import requests
 
 from .config import EmbeddingCfg
 
 
-def _12_normalize(vec: List[float]) -> List[float]:
+def _12_normalize(vec: list[float]) -> list[float]:
     s = sum(x * x for x in vec)
-    if s<= 0:
+    if s <= 0:
         return vec
     inv = 1.0 / math.sqrt(s)
     return [x * inv for x in vec]
 
 
-def local_hash_embed(text: str, dim: int, salt: str = "") -> List[float]:
+def local_hash_embed(text: str, dim: int, salt: str = "") -> list[float]:
     """
     Deterministic embedding for offline/mock use.
     Produces a normalized vector of length dim in [-1, 1].
     """
     seed = (salt + "::" + text).encode("utf-8")
-    h = hashlib.sha256(seed).digest()   # 32 bytes
+    h = hashlib.sha256(seed).digest()  # 32 bytes
     # Expand to required dim deterministically
-    out: List[float] = []
+    out: list[float] = []
     counter = 0
     while len(out) < dim:
         block = hashlib.sha256(h + counter.to_bytes(4, "little")).digest()
@@ -43,21 +42,21 @@ def local_hash_embed(text: str, dim: int, salt: str = "") -> List[float]:
 @dataclass
 class Embedder:
     cfg: EmbeddingCfg
-    
-    def embed(self, text: str) -> List[float]:
+
+    def embed(self, text: str) -> list[float]:
         p = self.cfg.provider.lower()
-        
+
         if p == "local_hash":
             return local_hash_embed(text, dim=self.cfg.dim, salt=self.cfg.salt)
-        
+
         if p == "http_or_local":
             if not self.cfg.base_url:
                 return local_hash_embed(text, dim=self.cfg.dim, salt=self.cfg.salt)
             return self._embed_http(text)
-        
+
         raise ValueError(f"Unknown embedding provider: {self.cfg.provider}")
-    
-    def _embed_http(self, text: str) -> List[float]:
+
+    def _embed_http(self, text: str) -> list[float]:
         url = self.cfg.base_url.rstrip("/") + self.cfg.endpoint_path
         payload = {"text": text, "dim": self.cfg.dim}
         r = requests.post(url, json=payload, timeout=self.cfg.timeout_sec)

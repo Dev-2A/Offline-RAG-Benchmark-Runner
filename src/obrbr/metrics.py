@@ -1,14 +1,14 @@
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Sequence, Set
 
 
 @dataclass
 class QueryEval:
     query_id: str
-    truth: Set[str]
-    ranked_labels: List[str]    # labels/doc-ids used for hit checking
+    truth: set[str]
+    ranked_labels: list[str]  # labels/doc-ids used for hit checking
 
 
 def recall_at_k(evals: Sequence[QueryEval], k: int) -> float:
@@ -22,5 +22,5 @@ def recall_at_k(evals: Sequence[QueryEval], k: int) -> float:
     return hit / len(evals)
 
 
-def recall_table(evals: Sequence[QueryEval], k_list: Iterable[int]) -> Dict[int, float]:
+def recall_table(evals: Sequence[QueryEval], k_list: Iterable[int]) -> dict[int, float]:
     return {k: recall_at_k(evals, k) for k in k_list}

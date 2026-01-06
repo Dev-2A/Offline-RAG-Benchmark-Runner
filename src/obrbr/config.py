@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import yaml
 
@@ -25,14 +25,14 @@ class ModelCfg:
 @dataclass
 class IndexCfg:
     name: str
-    backend: str        # mock / elasticsearch
+    backend: str  # mock / elasticsearch
     vector_field: str
     docs_path: str = ""
     id_field: str = "doc_id"
     label_field: str = "answer_id"
     doc_text_field = str = "question"
-    doc_vector: Optional[EmbeddingCfg] = None
-    
+    doc_vector: EmbeddingCfg | None = None
+
     # elasticsearch options (optional)
     es_url: str = ""
     es_index: str = ""
@@ -45,7 +45,7 @@ class IndexCfg:
 @dataclass
 class RunCfg:
     output_root: str
-    k_list: List[int]
+    k_list: list[int]
     topn: int = 10
     fail_fast: bool = False
 
@@ -61,22 +61,22 @@ class BenchCfg:
     project_name: str
     run: RunCfg
     data: DataCfg
-    models: Dict[str, ModelCfg]
-    indices: List[IndexCfg]
+    models: dict[str, ModelCfg]
+    indices: list[IndexCfg]
 
 
-def _require(d: Dict[str, Any], key: str, ctx: str) -> Any:
+def _require(d: dict[str, Any], key: str, ctx: str) -> Any:
     if key not in d:
         raise ValueError(f"Missing required key '{key}' in {ctx}")
     return d[key]
 
 
 def load_config(path: str) -> BenchCfg:
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)
-    
+
     project_name = _require(raw.get("project", {}), "name", "project")
-    
+
     run_raw = _require(raw, "run", "root")
     run_cfg = RunCfg(
         output_root=_require(run_raw, "output_root", "run"),
@@ -84,15 +84,15 @@ def load_config(path: str) -> BenchCfg:
         topn=int(run_raw.get("topn", 10)),
         fail_fast=bool(run_raw.get("fail_fast", False)),
     )
-    
+
     data_raw = _require(raw, "data", "root")
     data_cfg = DataCfg(
         queries_path=_require(data_raw, "queries_path", "data"),
         truth_key=str(data_raw.get("truth_key", "answer_ids")),
     )
-    
+
     models_raw = _require(raw, "models", "root")
-    models: Dict[str, ModelCfg] = {}
+    models: dict[str, ModelCfg] = {}
     for model_name, m in models_raw.items():
         qe = _require(m, "query_embedding", f"models.{model_name}")
         emb = EmbeddingCfg(
@@ -104,9 +104,9 @@ def load_config(path: str) -> BenchCfg:
             timeout_sec=int(qe.get("timeout_sec", 15)),
         )
         models[model_name] = ModelCfg(name=model_name, query_embedding=emb)
-    
+
     indices_raw = _require(raw, "indices", "root")
-    indices: List[IndexCfg] = []
+    indices: list[IndexCfg] = []
     for idx in indices_raw:
         doc_vec_cfg = None
         if "docd_vector" in idx and idx["doc_vector"] is not None:
@@ -116,7 +116,7 @@ def load_config(path: str) -> BenchCfg:
                 dim=int(_require(dv, "dim", f"indicies.{idx.get('name','?')}.doc_vector")),
                 salt=str(dv.get("salt", "")),
             )
-        
+
         indices.append(
             IndexCfg(
                 name=str(_require(idx, "name", "indices[*]")),
@@ -134,11 +134,7 @@ def load_config(path: str) -> BenchCfg:
                 es_use_knn=bool(idx.get("es_use_knn", True)),
             )
         )
-    
+
     return BenchCfg(
-        project_name=project_name,
-        run=run_cfg,
-        data=data_cfg,
-        models=models,
-        indices=indices
+        project_name=project_name, run=run_cfg, data=data_cfg, models=models, indices=indices
     )

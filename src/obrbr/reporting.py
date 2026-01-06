@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-from typing import Dict, List, Optional
 
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
@@ -18,7 +17,7 @@ def _autosize(ws) -> None:
         ws.column_dimensions[get_column_letter(col)].width = min(80, max(10, max_len + 2))
 
 
-def _ordered_headers(rows: List[Dict[str, object]]) -> List[str]:
+def _ordered_headers(rows: list[dict[str, object]]) -> list[str]:
     if not rows:
         return []
 
@@ -27,14 +26,14 @@ def _ordered_headers(rows: List[Dict[str, object]]) -> List[str]:
         keys.update(r.keys())
 
     preferred = ["index", "model", "queries", "winner", "error"]
-    cols: List[str] = [k for k in preferred if k in keys]
+    cols: list[str] = [k for k in preferred if k in keys]
 
     rest = sorted([k for k in keys if k not in cols])
     cols.extend(rest)
     return cols
 
 
-def _write_sheet(ws, rows: List[Dict[str, object]]) -> None:
+def _write_sheet(ws, rows: list[dict[str, object]]) -> None:
     headers = _ordered_headers(rows)
     if not headers:
         ws.append(["_empty_"])
@@ -47,9 +46,9 @@ def _write_sheet(ws, rows: List[Dict[str, object]]) -> None:
 
 def write_summary_xlsx(
     path: str,
-    summary_rows: List[Dict[str, object]],
-    per_index_sheets: Dict[str, List[Dict[str, object]]],
-    extra_sheets: Optional[Dict[str, List[Dict[str, object]]]] = None,
+    summary_rows: list[dict[str, object]],
+    per_index_sheets: dict[str, list[dict[str, object]]],
+    extra_sheets: dict[str, list[dict[str, object]]] | None = None,
 ) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
@@ -74,7 +73,7 @@ def write_summary_xlsx(
     wb.save(path)
 
 
-def render_summary_table_md(rows: List[Dict[str, object]]) -> str:
+def render_summary_table_md(rows: list[dict[str, object]]) -> str:
     if not rows:
         return "_No results_"
 
